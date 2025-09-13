@@ -3,45 +3,82 @@
 
 **EcoSimEngine** is a modular ecosystem simulation engine developed in C++20. It leverages SFML 3.0.0 for graphics rendering and nlohmann::json 3.12.0 for configuration management. The engine employs an Entity-Component-System (ECS) architecture to simulate complex interactions within a 2D environment.
 
+---
+
 ### 📦 Features
-- **ECS Architecture**: Utilizes components like `CHealth`, `CBehavior`, and `CTransform` to define entity attributes and behaviours.
-- **Modular Design**: Easily extendable with additional components and systems.
-- **2D Rendering**: Powered by SFML 3.0.0 for efficient graphics handling.
-- **JSON Configuration**: Structured configuration files for environment and simulation settings.
+- ECS Architecture: Entities are defined by components like `CHealth`, `CBehavior`, and `CTransform`.
+- Modular Design: Easily extendable with additional components and systems.
+- 2D Rendering: Powered by SFML 3.0.0 for graphics, window, and audio handling.
+- JSON Configuration: Structured configuration files for environments, species, and simulation settings.
+- Cross-platform: Buildable on Windows, Linux, and macOS via CMake.
+
+---
 
 ### 🔧 Dependencies
-- **C++20**: Ensure your compiler supports C++20 features.
-- **[SFML 3.0.0](https://www.sfml-dev.org/download/sfml/3.0.0/)**: For GUI with graphics, window, and audio functionalities.
-- **[nlohmann::json 3.12.0](https://github.com/nlohmann/json/releases/tag/v3.12.0)**: For parsing and handling JSON configuration files.
-  - I decide use `json` file instead of plain `txt` file for configuration, because it is more structured and easier to manage. 
+- C++20 compiler (e.g. GCC 11+, Clang 12+, MSVC 19.3+)
+- [CMake 3.28+](https://cmake.org/download/)
+- [SFML 3.0.0](https://www.sfml-dev.org/download/sfml/3.0.0/) (graphics, window, audio)
+  
+> ℹ️ The following dependencies are **already included in the project** under `external/`, so you do not need to download them separately:  
+> - ImGui  
+> - ImGui-SFML  
+> - nlohmann/json.hpp  
+
+---
 
 ### 🗂 Project Structure
-```make
+```text
 EcoSimEngine/
-├── config/               # JSON configuration files
-├── include/              # Header files
-├── resources/            # Fonts, textures, and other assets
-├── src/                  # Source files
-├── EcoSimEngine.sln      # Visual Studio solution file
-├── EcoSimEngine.vcxproj  # Visual Studio project file
-├── LICENSE               # Project license
-└── README.md             # Project documentation
+├── cmake/            # CMake package config (EcoSimEngineConfig.cmake.in, etc.)
+├── config/           # JSON configuration files
+├── external/         # Third-party libraries (imgui, imgui-sfml, nlohmann)
+├── include/          # Public headers (EcoSimEngine API)
+│   └── EcoSimEngine/
+│       ├── component/
+│       ├── ecs/
+│       ├── event/
+│       ├── gui/
+│       ├── math/
+│       ├── scene/
+│       ├── system/
+│       └── utils/
+├── resources/        # Assets (fonts, sounds, textures, defaults, definitions)
+├── src/              # Engine implementation
+├── tests/            # Unit / integration tests (optional)
+├── examples/         # Example usage apps (optional)
+├── CMakeLists.txt    # Root CMake build script
+├── LICENSE           # License file
+└── README.md         # Project documentation
 ```
 
-### 🛠 Installation & Build
+---
+
+### 🛠 Build & Run
 
 1. Clone the Repository:
-```
-git clone -b prototype https://github.com/czlin7/EcoSimEngine.git
-cd EcoSimEngine
-```
-2. Open the Project:
-   - **Visual Studio**: Open `EcoSimEngine.sln`
-   - **Other IDEs**: Open the project using the appropriate project file.
-3. Configure Dependencies:
-   - Ensure SFML 3.0.0 and nlohmann::json 3.12.0 are correctly linked in your project settings.
-4. Build the Project:
-   - Select the desired configuration (`Debug` or `Release`) and build the project.
+
+   ```
+   git clone -b prototype https://github.com/czlin7/EcoSimEngine.git
+   cd EcoSimEngine
+   ```
+
+2. Configure & build with CMake
+
+   ```
+   cmake -B build
+   cmake --build build --config Release
+   ```
+
+   - CMake will first try to find SFML installed on your system.  
+   - **If SFML is not found automatically** (common on Windows), open `CMakeLists.txt` and update the line:
+      ```
+      set(SFML_DIR "D:/SFML-3.0.0/lib/cmake/SFML") # update to your SFML installation path
+      ```
+
+3. Run
+   - Executables will be placed in: `build/bin/Debug/` or `build/bin/Release`, depending on the build configuration.
+
+---
 
 ### 🤝 Contributing
 We welcome contributions to EcoSimEngine! To contribute:
@@ -52,7 +89,7 @@ We welcome contributions to EcoSimEngine! To contribute:
 git checkout -b feature/YourFeatureName
 ```
 3. **Make your changes** in the branch. Follow existing ECS structure and coding style.
-4. **Commit your changes** with clear, descriptive messages. Use prefixes like `[feat]:` or `[fix]:`.
+4. **Commit your changes** with clear, descriptive messages. Use prefixes like `[feat] ` or `[fix] `.
 ```
 git commit -m "[feat]: Add CBehavior component"
 ```

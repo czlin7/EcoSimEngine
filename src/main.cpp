@@ -1,19 +1,25 @@
-// Project: Ecosystem Simulation
-// SFML version 3.0.0
-// C++ version C++20
-// 
-// external libraries used:
-// - SFML 3.0.0
-// - nlohmann/json 3.12.0
-// - ImGui-SFML 3.0
-
+#include <iostream>
 #include <SFML/Graphics.hpp>
 #include "EcoSimEngine/SimulationEngine.hpp"
 #include "EcoSimEngine/math/Vec2.hpp"
 
-int main(void) {
-	SimulationEngine sim("config/config.json");
-	sim.run();
+int main() {
+    try {
+        std::cout << "[DEBUG] Starting SimulationEngine..." << std::endl;
+
+        SimulationEngine sim("config/config.json");
+        std::cout << "[DEBUG] SimulationEngine created successfully." << std::endl;
+
+        sim.run();
+        std::cout << "[DEBUG] Simulation run completed successfully." << std::endl;
+
+    } catch (const std::exception& e) {
+        std::cerr << "[ERROR] Exception caught: " << e.what() << std::endl;
+        return -1;
+    } catch (...) {
+        std::cerr << "[ERROR] Unknown exception caught!" << std::endl;
+        return -1;
+    }
 
     return 0;
 }

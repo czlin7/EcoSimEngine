@@ -1,17 +1,38 @@
-# Visual Studio temp & settings
+#-------------------------
+# Visual Studio
+#-------------------------
 .vs/
-*.vcxproj.user
 *.suo
+*.user
+*.vcxproj
+*.vcxproj.filters
 
-# Build outputs
-Debug/
-Release/
-*.exe
-*.dll
-*.lib
-*.obj
-*.pdb
+#-------------------------
+# CMake build directories
+#-------------------------
+/build/
+/out/
+/out/build/
+/cmake-build-*/
 
-# OS stuff
+CMakeFiles/
+CMakeCache.txt
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+
+#-------------------------
+# IDE / Editor
+#-------------------------
+*.code-workspace
+*.idea/
+*.vscode/
+
+#-------------------------
+# OS files
+#-------------------------
 Thumbs.db
 .DS_Store

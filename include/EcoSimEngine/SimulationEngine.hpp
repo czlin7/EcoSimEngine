@@ -8,7 +8,7 @@
 #include "EcoSimEngine/scene/SceneManager.hpp"
 #include "EcoSimEngine/ecs/Assets.hpp"
 #include "EcoSimEngine/system/SystemManager.hpp"
-#include "EcoSimEngine/GUI/GUIManager.hpp"
+#include "EcoSimEngine/gui/GUIManager.hpp"
 #include "EcoSimEngine/event/EventBus.hpp"
 
 struct WindowConfig {
