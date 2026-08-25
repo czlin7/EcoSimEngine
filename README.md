@@ -27,7 +27,7 @@ The project is still under active development. Save/load, simulation behaviour, 
 - a C++20-capable compiler
 - Git when CMake needs to fetch SFML
 
-The repository vendors Dear ImGui, ImGui-SFML, and nlohmann/json. CMake first looks for an installed SFML 3 package and otherwise fetches SFML 3.0.0 during configuration.
+The repository vendors Dear ImGui, ImGui-SFML, and nlohmann/json. CMake first looks for an installed SFML 3 package and otherwise fetches SFML 3.1.0 during configuration.
 
 ## Build
 
@@ -67,7 +67,7 @@ cmake --build build-tests
 ctest --test-dir build-tests --output-on-failure
 ```
 
-This headless path is used by CI to validate the dependency-free core managers and event bus.
+This headless path is used by CI to validate the dependency-free core managers and event bus. CI also builds the complete desktop application on Linux and Windows.
 
 ## Project structure
 
