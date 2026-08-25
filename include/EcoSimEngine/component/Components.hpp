@@ -23,8 +23,8 @@ public:
 
     CTransform(const Vec2f& p, const Vec2f& v, float s)
         : pos(p), velocity(v), scale(s) { }
-    CTransform(const Vec2f &pos)
-        : CTransform(pos, {}, scale) { }
+    explicit CTransform(const Vec2f &pos)
+        : pos(pos) { }
 };
 
 class CSpecies : public Component
