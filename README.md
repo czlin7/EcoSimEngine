@@ -23,11 +23,11 @@ The project is still under active development. Save/load, simulation behaviour, 
 
 ## Requirements
 
-- CMake 3.24+
+- CMake 3.28+
 - a C++20-capable compiler
 - Git when CMake needs to fetch SFML
 
-The repository vendors Dear ImGui, ImGui-SFML, and nlohmann/json. CMake first looks for an installed SFML 3 package and otherwise fetches SFML 3.1.0 during configuration.
+The repository vendors Dear ImGui, ImGui-SFML, and nlohmann/json. CMake first looks for an installed SFML 3.1 package and otherwise fetches SFML 3.1.0 during configuration. Only the SFML modules used by EcoSimEngine are built.
 
 ## Build
 
