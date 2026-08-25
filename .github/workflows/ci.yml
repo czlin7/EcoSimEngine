@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Configure headless foundation tests
         run: >
@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install SFML Linux build dependencies
         run: |
@@ -63,3 +63,19 @@ jobs:
 
       - name: Build full application
         run: cmake --build build-app --parallel
+
+  windows-app-build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Configure full application
+        run: >
+          cmake -S . -B build-app
+          -DBUILD_TESTING=OFF
+          -DBUILD_SHARED_LIBS=OFF
+
+      - name: Build full application
+        run: cmake --build build-app --config Release --parallel
