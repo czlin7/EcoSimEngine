@@ -1,25 +1,20 @@
-#include <iostream>
-#include <SFML/Graphics.hpp>
 #include "EcoSimEngine/SimulationEngine.hpp"
-#include "EcoSimEngine/math/Vec2.hpp"
+
+#include <cstdlib>
+#include <exception>
+#include <iostream>
 
 int main() {
     try {
-        std::cout << "[DEBUG] Starting SimulationEngine..." << std::endl;
-
-        SimulationEngine sim("config/config.json");
-        std::cout << "[DEBUG] SimulationEngine created successfully." << std::endl;
-
-        sim.run();
-        std::cout << "[DEBUG] Simulation run completed successfully." << std::endl;
-
-    } catch (const std::exception& e) {
-        std::cerr << "[ERROR] Exception caught: " << e.what() << std::endl;
-        return -1;
+        SimulationEngine simulation("config/config.json");
+        simulation.run();
+    } catch (const std::exception& error) {
+        std::cerr << "EcoSimEngine failed: " << error.what() << '\n';
+        return EXIT_FAILURE;
     } catch (...) {
-        std::cerr << "[ERROR] Unknown exception caught!" << std::endl;
-        return -1;
+        std::cerr << "EcoSimEngine failed with an unknown error\n";
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }

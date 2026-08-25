@@ -1,20 +1,12 @@
-#-------------------------
 # Visual Studio
-#-------------------------
 .vs/
 *.suo
 *.user
-*.vcxproj
-*.vcxproj.filters
 
-#-------------------------
-# CMake build directories
-#-------------------------
+# CMake and build outputs
 /build/
 /out/
-/out/build/
 /cmake-build-*/
-
 CMakeFiles/
 CMakeCache.txt
 CMakeScripts/
@@ -24,15 +16,17 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 
-#-------------------------
-# IDE / Editor
-#-------------------------
+# IDE / editor state
+.idea/
+.vscode/
 *.code-workspace
-*.idea/
-*.vscode/
+CMakeUserPresets.json
 
-#-------------------------
-# OS files
-#-------------------------
+# Runtime-generated files
+imgui.ini
+/saves/
+*.log
+
+# OS metadata
 Thumbs.db
 .DS_Store
