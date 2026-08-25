@@ -17,11 +17,11 @@ if(ECOSIM_BUILD_APP)
 
     find_package(SFML 3 QUIET COMPONENTS Graphics Window System Audio)
     if(NOT SFML_FOUND)
-        message(STATUS "SFML 3 not found locally; fetching SFML 3.0.0")
+        message(STATUS "SFML 3 not found locally; fetching SFML 3.1.0")
         FetchContent_Declare(
             SFML
             GIT_REPOSITORY https://github.com/SFML/SFML.git
-            GIT_TAG 3.0.0
+            GIT_TAG 3.1.0
             GIT_SHALLOW TRUE
         )
         FetchContent_MakeAvailable(SFML)
