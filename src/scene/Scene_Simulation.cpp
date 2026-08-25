@@ -64,7 +64,7 @@ void Scene_Simulation::loadSimulation(const std::string& simulationKey) {
     std::ifstream ifs(path);
     if (!ifs.is_open()) {
         std::cerr << "No save found for key \"" << simulationKey
-            << "\" at " << path << " — loading default.\n";
+            << "\" at " << path << " ï¿½ loading default.\n";
         loadDefaultSimulation(m_defaultSimulationPath);
         return;
     }
@@ -75,7 +75,7 @@ void Scene_Simulation::loadSimulation(const std::string& simulationKey) {
     }
     catch (const nlohmann::json::parse_error& e) {
         std::cerr << "Failed to parse save file " << path << ": " << e.what()
-            << " — loading default.\n";
+            << " ï¿½ loading default.\n";
         loadDefaultSimulation(m_defaultSimulationPath);
         return;
     }
@@ -219,9 +219,6 @@ void Scene_Simulation::update() {
         //sCamera();
         m_currentFrame++;
     }
-
-    //sGUI();
-    sRender();
 }
 
 void Scene_Simulation::onEnd() {

@@ -169,6 +169,4 @@ void Scene_Menu::onEnd() {
     m_simulation->eventBus().publish(Event::GUICommand::App_Quit);
 }
 
-void Scene_Menu::update() {
-    sRender();
-}
+void Scene_Menu::update() { }
