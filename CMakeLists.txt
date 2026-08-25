@@ -19,6 +19,7 @@ if(ECOSIM_BUILD_APP)
     if(NOT SFML_FOUND)
         message(STATUS "SFML 3.1 not found locally; fetching SFML 3.1.0")
         set(SFML_BUILD_NETWORK OFF CACHE BOOL "Do not build unused SFML Network module" FORCE)
+        set(SFML_USE_SYSTEM_DEPS OFF CACHE BOOL "Use SFML bundled fallback dependencies" FORCE)
         FetchContent_Declare(
             SFML
             GIT_REPOSITORY https://github.com/SFML/SFML.git
