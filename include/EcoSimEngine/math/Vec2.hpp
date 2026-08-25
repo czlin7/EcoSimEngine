@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 
 #include <SFML/System/Vector2.hpp>
@@ -10,7 +10,7 @@ template <typename T>
 class Vec2
 {
 public:
-    T x{0}, y{0};
+    T x{}, y{};
 
     constexpr Vec2() = default;
 
@@ -64,7 +64,7 @@ public:
     {
         if (scalar == 0)
         {
-            throw std::runtime_error("Division by zero in Vec2 division");
+            throw std::domain_error("Division by zero in Vec2 division");
         }
         return Vec2(x / scalar, y / scalar);
     }
@@ -93,7 +93,7 @@ public:
     {
         if (scalar == 0)
         {
-            throw std::runtime_error("Division by zero in Vec2 division");
+            throw std::domain_error("Division by zero in Vec2 division");
         }
         x /= scalar;
         y /= scalar;
@@ -116,18 +116,23 @@ public:
 
     double length() const
     {
-        return std::sqrt(static_cast<double>(x * x + y * y));
+        return std::hypot(
+            static_cast<double>(x),
+            static_cast<double>(y));
     }
 
-    Vec2 normalized() const
+    Vec2<double> normalized() const
     {
-        double len = length();
-        if (len == 0)
+        const double len = length();
+
+        if (len == 0.0)
         {
-            throw std::runtime_error("Cannot normalize a zero-length vector");
+            throw std::domain_error("Cannot normalize a zero-length vector");
         }
-        return Vec2(x / len, y / len);
-        // Note: Fast Inverse Square Root not implemented here due to precision needs.
+
+        return Vec2<double>(
+            static_cast<double>(x) / len,
+            static_cast<double>(y) / len);
     }
 
     Vec2 abs() const
@@ -150,52 +155,71 @@ public:
     // Angle between two vectors in radians
     double angleBetween(const Vec2 &other) const
     {
-        double dotPod = dot(other);
-        double lengths = length() * other.length();
+        double dotProd = dot(other);
+        const double lengths = length() * other.length();
         if (lengths == 0)
-            throw std::runtime_error("Zero length vector in angleBetween calculation");
+            throw std::domain_error("Zero length vector in angleBetween calculation");
 
         // Clamp the value to the range [-1, 1] to avoid NaN due to floating point precision issues
-        double cosTheta = std::clamp(dotPod / lengths, -1.0, 1.0);
+        double cosTheta = std::clamp(dotProd / lengths, -1.0, 1.0);
         return std::acos(cosTheta);
     }
 
     // Rotation by an angle in radians around the origin
-    Vec2 rotated(double radians) const noexcept
+    Vec2<double> rotated(double radians) const noexcept
     {
-        double cosTheta = std::cos(radians);
-        double sinTheta = std::sin(radians);
-        return Vec2(
-            static_cast<T>(x * cosTheta - y * sinTheta),
-            static_cast<T>(x * sinTheta + y * cosTheta));
+        const double cosTheta = std::cos(radians);
+        const double sinTheta = std::sin(radians);
+
+        const double dx = static_cast<double>(x);
+        const double dy = static_cast<double>(y);
+
+        return Vec2<double>(
+            dx * cosTheta - dy * sinTheta,
+            dx * sinTheta + dy * cosTheta);
     }
 
     // Rotation by an angle in radians around a specific point
-    inline Vec2 rotatedAround(double radians, const Vec2 &point) const noexcept
+    Vec2<double> rotatedAround(
+        double radians,
+        const Vec2 &point) const noexcept
     {
-        // translate -> rotate -> translate back
-        return ((*this - point).rotated(radians) + point);
+        const double cosTheta = std::cos(radians);
+        const double sinTheta = std::sin(radians);
+
+        const double pointX = static_cast<double>(point.x);
+        const double pointY = static_cast<double>(point.y);
+
+        const double translatedX =
+            static_cast<double>(x) - pointX;
+
+        const double translatedY =
+            static_cast<double>(y) - pointY;
+
+        return Vec2<double>(
+            translatedX * cosTheta - translatedY * sinTheta + pointX,
+            translatedX * sinTheta + translatedY * cosTheta + pointY);
     }
 
     // Static utility functions
 
     // Create from angle in radians
-    static Vec2 fromAngle(double radians) noexcept
+    static Vec2<double> fromAngle(double radians) noexcept
     {
-        return Vec2(
-            static_cast<T>(std::cos(radians)),
-            static_cast<T>(std::sin(radians)));
+        return Vec2<double>(
+            std::cos(radians),
+            std::sin(radians));
     }
 
     // Create from angle in radians with a specific magnitude
-    static Vec2 fromAngle(double radians, T magnitude) noexcept
+    static Vec2<double> fromAngle(
+        double radians,
+        double magnitude) noexcept
     {
-        return Vec2(
-            static_cast<T>(std::cos(radians) * magnitude),
-            static_cast<T>(std::sin(radians) * magnitude));
+        return Vec2<double>(
+            std::cos(radians) * magnitude,
+            std::sin(radians) * magnitude);
     }
-
-
 };
 
 // Left side arithmetic operations
