@@ -1,17 +1,32 @@
-# Visual Studio temp & settings
+# Visual Studio
 .vs/
-*.vcxproj.user
 *.suo
+*.user
 
-# Build outputs
-Debug/
-Release/
-*.exe
-*.dll
-*.lib
-*.obj
-*.pdb
+# CMake and build outputs
+/build/
+/out/
+/cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
 
-# OS stuff
+# IDE / editor state
+.idea/
+.vscode/
+*.code-workspace
+CMakeUserPresets.json
+
+# Runtime-generated files
+imgui.ini
+/saves/
+*.log
+
+# OS metadata
 Thumbs.db
 .DS_Store

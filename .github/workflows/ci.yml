@@ -1,0 +1,81 @@
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  foundation-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Configure headless foundation tests
+        run: >
+          cmake -S . -B build
+          -DECOSIM_BUILD_APP=OFF
+          -DBUILD_TESTING=ON
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build foundation tests
+        run: cmake --build build --parallel
+
+      - name: Run foundation tests
+        run: ctest --test-dir build --output-on-failure
+
+  linux-app-build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install SFML Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            xorg-dev \
+            libxrandr-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libudev-dev \
+            libflac-dev \
+            libvorbis-dev \
+            libgl1-mesa-dev \
+            libegl1-mesa-dev \
+            libdrm-dev \
+            libgbm-dev
+
+      - name: Configure full application
+        run: >
+          cmake -S . -B build-app
+          -DBUILD_TESTING=OFF
+          -DBUILD_SHARED_LIBS=OFF
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build full application
+        run: cmake --build build-app --parallel
+
+  windows-app-build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Configure full application
+        run: >
+          cmake -S . -B build-app
+          -DBUILD_TESTING=OFF
+          -DBUILD_SHARED_LIBS=OFF
+
+      - name: Build full application
+        run: cmake --build build-app --config Release --parallel

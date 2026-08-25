@@ -1,4 +1,4 @@
-#include "EcoSimEngine/GUI/GUIManager.hpp"
+#include "EcoSimEngine/gui/GUIManager.hpp"
 #include "EcoSimEngine/SimulationEngine.hpp"
 #include "EcoSimEngine/event/Events.hpp"
 
@@ -15,7 +15,7 @@ GUIManager::GUIManager(SimulationEngine* engine)
 }
 
 GUIManager::~GUIManager() {
-	// don't call shutdown() here — we will call shutdown explicitly when engine stops.
+	// don't call shutdown() here ï¿½ we will call shutdown explicitly when engine stops.
 }
 
 void GUIManager::init(sf::RenderWindow& window) {
@@ -116,7 +116,7 @@ void GUIManager::loaddFonts() {
 	}
 	catch (const std::exception& e) {
 		std::cerr << "GUIManager::loaddFonts error: " << e.what()
-			<< " — falling back to ImGui default font." << std::endl;
+			<< " ï¿½ falling back to ImGui default font." << std::endl;
 		// Guarantee at least one font exists
 		io.Fonts->Clear();
 		io.Fonts->AddFontDefault();

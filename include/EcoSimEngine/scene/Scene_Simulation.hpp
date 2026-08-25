@@ -1,26 +1,24 @@
 #pragma once
 
-#include <memory>
+#include <string>
+#include <unordered_map>
 
-#include "SFML/Graphics/Text.hpp"
+#include <SFML/Graphics/Color.hpp>
+#include <SFML/System/Clock.hpp>
+#include <nlohmann/json.hpp>
 
 #include "EcoSimEngine/component/Components.hpp"
 #include "EcoSimEngine/scene/Scene.hpp"
-#include "EcoSimEngine/Utils/SpatialHash.hpp"
-
-#include <nlohmann/json.hpp>
+#include "EcoSimEngine/utils/SpatialHash.hpp"
 
 class Scene_Simulation : public Scene {
 private:
     std::string m_simKey;
-	const std::string m_defaultSimulationPath{ "resources/defaults/default_simulation.json" };
+    const std::string m_defaultSimulationPath{ "resources/defaults/default_simulation.json" };
 
-    // simple species -> color map for rendering
     std::unordered_map<std::string, sf::Color> m_speciesColors;
-
-    // spatial accel structure + timers
-	SpatialHash m_spatialHash{ 120.0f }; // default cell size (tweakable)
-	sf::Clock m_clock; // for timing updates
+    SpatialHash m_spatialHash{ 120.0f };
+    sf::Clock m_clock;
 
 protected:
     bool m_drawTextures{ true };
@@ -28,30 +26,24 @@ protected:
     bool m_drawGrid{};
     bool m_follow{};
 
-    const Vec2f m_gridSize = { 64, 64 };
-    //sf::Text m_gridText;
-
+    const Vec2f m_gridSize{ 64.0f, 64.0f };
     Vec2f m_mousePos;
 
-	// lifecycle
     void init(const std::string& simulationKey);
-	void loadSimulation(const std::string& simulationKey); // load a named/save simulation (TODO: implement file loading)
-    void loadDefaultSimulation(const std::string & defaultSimulationPath); // load default config
-    void spawnFromJson(const nlohmann::json& simJson);                        // shared spawn logic 
+    void loadSimulation(const std::string& simulationKey);
+    void loadDefaultSimulation(const std::string& defaultSimulationPath);
+    void spawnFromJson(const nlohmann::json& simJson);
 
-    // scene callbacks
     void onEnd() override;
     void sDoAction(const Action& action) override;
     void sRender() override;
 
 public:
-    // simKey = empty -> create new simulation from default config
-    Scene_Simulation(SimulationEngine* simulationEngine, const std::string& simKey = {}); // Constructor takes in specific simulation name
+    explicit Scene_Simulation(
+        SimulationEngine* simulationEngine,
+        const std::string& simKey = {});
 
     void update() override;
-
-	// helpers
     std::string buildSavePathFromKey(const std::string& key);
-
-    void onGui();
+    void onGui() override;
 };
