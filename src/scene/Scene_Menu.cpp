@@ -144,10 +144,10 @@ void Scene_Menu::sRender() {
     sf::RectangleShape rect;
     rect.setSize({ 200.f, 100.f });
     rect.setFillColor(sf::Color::Green);
-    rect.setPosition(Vec2f(
+    rect.setPosition({
         (window.getSize().x - rect.getSize().x) / 2.f,
-        (window.getSize().y - rect.getSize().y) / 2.f)
-    );
+        (window.getSize().y - rect.getSize().y) / 2.f
+    });
     window.draw(rect);
 
     // draw menu texts depends on the MenuState

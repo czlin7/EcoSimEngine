@@ -4,8 +4,6 @@
 #include <cmath>
 #include <stdexcept>
 
-#include <SFML/System/Vector2.hpp>
-
 template <typename T>
 class Vec2
 {
@@ -21,13 +19,6 @@ public:
     // explicit usage to avoid accidental conversions
     constexpr explicit Vec2(T value)
         : x(value), y(value) {}
-
-    // allow automatic conversion to sf::Vector2<T>
-    // this lets us pass Vec2 to functions that expect sf::Vector2<T>
-    constexpr operator sf::Vector2<T>() const noexcept
-    {
-        return sf::Vector2<T>(x, y);
-    }
 
     // unary negation
     constexpr Vec2 operator-() const noexcept

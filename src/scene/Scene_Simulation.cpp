@@ -248,7 +248,7 @@ void Scene_Simulation::sRender() {
 
         sf::CircleShape circle(10.0f);
         circle.setOrigin({ circle.getRadius(), circle.getRadius() });
-        circle.setPosition(transform.pos);
+        circle.setPosition({ transform.pos.x, transform.pos.y });
 
         // lookup species color
         const auto& species = cm.get<CSpecies>(id);
