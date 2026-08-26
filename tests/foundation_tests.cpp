@@ -3,6 +3,7 @@
 #include "EcoSimEngine/event/EventBus.hpp"
 #include "EcoSimEngine/system/System.hpp"
 #include "EcoSimEngine/system/SystemManager.hpp"
+#include "EcoSimEngine/ecs/EntityManager.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -94,6 +95,71 @@ void testSystemManager() {
             "setting a signature for an unregistered system must fail explicitly");
 }
 
+void testEntityDestruction() {
+    SystemManager systems;
+    ComponentManager components;
+    EntityManager entities(&systems, &components);
+
+    auto transformSystem = systems.RegisterSystem<TransformSystem>();
+
+    Signature required;
+    required.set(COMP_INDEX_CTransform);
+    systems.SetSignature<TransformSystem>(required);
+
+    auto destroyedEntity = entities.addEntity("destroyed");
+    auto survivingEntity = entities.addEntity("survivor");
+
+    entities.addComponent<CTransform>(destroyedEntity);
+    entities.addComponent<CEnergy>(destroyedEntity, 50.0f);
+
+    entities.addComponent<CTransform>(survivingEntity);
+
+    entities.update();
+
+    const auto destroyedId = destroyedEntity->id();
+    const auto survivingId = survivingEntity->id();
+
+    require(components.has<CTransform>(destroyedId),
+            "entity must have Transform before destruction");
+
+    require(components.has<CEnergy>(destroyedId),
+            "entity must have Energy before destruction");
+
+    require(transformSystem->mEntities.contains(destroyedId),
+            "entity must belong to matching system before destruction");
+
+    entities.destroyEntity(destroyedEntity);
+
+    require(!destroyedEntity->isActive(),
+            "destroyed entity must become inactive");
+
+    require(!components.has<CTransform>(destroyedId),
+            "destroying entity must remove Transform");
+
+    require(!components.has<CEnergy>(destroyedId),
+            "destroying entity must remove Energy");
+
+    require(destroyedEntity->signature().none(),
+            "destroying entity must clear its component signature");
+
+    require(!transformSystem->mEntities.contains(destroyedId),
+            "destroying entity must remove it from systems");
+
+    require(components.has<CTransform>(survivingId),
+            "destroying one entity must not remove another entity's components");
+
+    require(transformSystem->mEntities.contains(survivingId),
+            "destroying one entity must not remove another entity from systems");
+
+    entities.update();
+
+    require(entities.getEntityById(destroyedId) == nullptr,
+            "destroyed entity must be removed from EntityManager after update");
+
+    require(entities.getEntityById(survivingId) != nullptr,
+            "surviving entity must remain managed");
+}
+
 void testEventBus() {
     EventBus bus;
     int total = 0;
@@ -119,6 +185,7 @@ int main() {
     try {
         testComponentManager();
         testSystemManager();
+        testEntityDestruction();
         testEventBus();
     } catch (const std::exception& error) {
         std::cerr << "foundation test failure: " << error.what() << '\n';

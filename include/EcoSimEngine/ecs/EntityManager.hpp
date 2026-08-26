@@ -66,7 +66,7 @@ public:
     void setSystemManager(SystemManager* sm) { m_systemManager = sm; }     // Give the EntityManager a reference to the SystemManager so it can notify about changes.
 	void setComponentManager(ComponentManager* cm) { m_componentManager = cm; } // Give the EntityManager a reference to the ComponentManager so it can manage components.
 
-    // Find entity by numeric id. Linear search — fine for small projects / prototypes.
+    // Find entity by numeric id. Linear search ï¿½ fine for small projects / prototypes.
     std::shared_ptr<Entity> getEntityById(size_t id) {
         for (auto& e : m_entities) {
             if (e && e->id() == id) return e;
@@ -93,10 +93,18 @@ public:
         if (m_systemManager) m_systemManager->EntitySignatureChanged(entity->id(), entity->signature());
     }
 
-    // Prefer calling this instead of entity->destroy() so systems are informed.
+    // Destroy an entity and clean up all ECS state associated with it.
     void destroyEntity(const std::shared_ptr<Entity>& entity) {
         if (!entity) return;
+
+        const auto id = entity->id();
+
         entity->destroy();
+
+        if (m_componentManager) m_componentManager->entityDestroyed(id);
+
+        entity->signature().reset(); // clear the signature to indicate no components are present
+
         if (m_systemManager) m_systemManager->EntityDestroyed(entity->id());
     }
 
