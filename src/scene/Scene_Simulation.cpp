@@ -19,24 +19,22 @@
 #include "EcoSimEngine/scene/Scene_Simulation.hpp"
 #include "EcoSimEngine/math/Vec2.hpp"
 #include "EcoSimEngine/utils/Utils.hpp"
-#include "EcoSimEngine/utils/SpatialHash.hpp"
-#include "EcoSimEngine/system/MovementSystem.hpp"
-#include "EcoSimEngine/system/AISystem.hpp"
 
-
-Scene_Simulation::Scene_Simulation(SimulationEngine* engine, const std::string& simKey)
-    : Scene(engine)
-    , m_simKey(simKey)
+Scene_Simulation::Scene_Simulation(SimulationEngine *engine, const std::string &simKey)
+    : Scene(engine), m_simKey(simKey)
 {
     init(simKey);
 }
 
-void Scene_Simulation::init(const std::string& simulationKey) {
+void Scene_Simulation::init(const std::string &simulationKey)
+{
     // Decide whether to load a named simulation (if provided) or default
-    if (!simulationKey.empty()) {
+    if (!simulationKey.empty())
+    {
         loadSimulation(simulationKey);
     }
-    else {
+    else
+    {
         loadDefaultSimulation(m_defaultSimulationPath);
     }
 
@@ -58,57 +56,66 @@ void Scene_Simulation::init(const std::string& simulationKey) {
     registerAction(sf::Keyboard::Key::D, ActionName::RIGHT);
 }
 
-void Scene_Simulation::loadSimulation(const std::string& simulationKey) {
+void Scene_Simulation::loadSimulation(const std::string &simulationKey)
+{
     // TODO: implement full named-save loading; for now attempt to open a file, fallback to default.
     const auto path = buildSavePathFromKey(simulationKey);
     std::ifstream ifs(path);
-    if (!ifs.is_open()) {
+    if (!ifs.is_open())
+    {
         std::cerr << "No save found for key \"" << simulationKey
-            << "\" at " << path << " � loading default.\n";
+                  << "\" at " << path << " � loading default.\n";
         loadDefaultSimulation(m_defaultSimulationPath);
         return;
     }
 
     nlohmann::json simJson;
-    try {
+    try
+    {
         ifs >> simJson;
     }
-    catch (const nlohmann::json::parse_error& e) {
+    catch (const nlohmann::json::parse_error &e)
+    {
         std::cerr << "Failed to parse save file " << path << ": " << e.what()
-            << " � loading default.\n";
+                  << " � loading default.\n";
         loadDefaultSimulation(m_defaultSimulationPath);
         return;
     }
 
     // Clear any existing entities
-    m_simulation->entityManager().clearAll();
+    m_world.entityManager().clearAll();
     spawnFromJson(simJson);
 }
 
-void Scene_Simulation::loadDefaultSimulation(const std::string& defaultSimulationPath) {
+void Scene_Simulation::loadDefaultSimulation(const std::string &defaultSimulationPath)
+{
     std::ifstream ifs(defaultSimulationPath);
-    if (!ifs.is_open()) {
+    if (!ifs.is_open())
+    {
         std::cerr << "Error: Could not open default simulation file: " << defaultSimulationPath << std::endl;
         return;
     }
 
     nlohmann::json simJson;
-    try {
+    try
+    {
         ifs >> simJson;
     }
-    catch (const nlohmann::json::parse_error& e) {
+    catch (const nlohmann::json::parse_error &e)
+    {
         std::cerr << "Failed to parse default simulation file " << defaultSimulationPath << ": " << e.what() << "\n";
         return;
     }
 
     // Clear any existing entities
-    m_simulation->entityManager().clearAll();
+    m_world.entityManager().clearAll();
     spawnFromJson(simJson);
 }
 
-void Scene_Simulation::spawnFromJson(const nlohmann::json& simJson) {
-    auto& em = m_simulation->entityManager();
-    auto& cm = m_simulation->componentManager();
+void Scene_Simulation::spawnFromJson(const nlohmann::json &simJson)
+{
+    auto &em = m_world.entityManager();
+    auto &cm = m_world.componentManager();
 
     // read population counts
     auto populations = simJson["simulation"]["initialPopulation"];
@@ -125,13 +132,15 @@ void Scene_Simulation::spawnFromJson(const nlohmann::json& simJson) {
 
     // Precompute species colours (single pass)
     int idx = 0;
-    for (auto& [speciesName, popData] : populations.items()) {
-        float hue = (idx * 360.0f) / std::max(1, speciesCount);  // evenly spaced hues
+    for (auto &[speciesName, popData] : populations.items())
+    {
+        float hue = (idx * 360.0f) / std::max(1, speciesCount);   // evenly spaced hues
         m_speciesColors[speciesName] = hslToRgb(hue, 0.7f, 0.5f); // 70% sat, 50% lightness
         ++idx;
     }
 
-    for (auto& [speciesName, popData] : populations.items()) {
+    for (auto &[speciesName, popData] : populations.items())
+    {
         int total = popData["total"];
         int males = popData["male"];
         int females = popData["female"];
@@ -139,7 +148,8 @@ void Scene_Simulation::spawnFromJson(const nlohmann::json& simJson) {
         // load species data JSON (per-species data)
         std::string speciesFile = "resources/definitions/species/" + speciesName + ".json";
         std::ifstream sf(speciesFile);
-        if (!sf.is_open()) {
+        if (!sf.is_open())
+        {
             std::cerr << "Could not open species file: " << speciesFile << "\n";
             continue;
         }
@@ -147,7 +157,8 @@ void Scene_Simulation::spawnFromJson(const nlohmann::json& simJson) {
         sf >> speciesJson;
 
         // create entities
-        for (int i = 0; i < total; ++i) {
+        for (int i = 0; i < total; ++i)
+        {
             auto entity = em.addEntity(speciesName);
 
             // --- add Components ---
@@ -161,7 +172,7 @@ void Scene_Simulation::spawnFromJson(const nlohmann::json& simJson) {
             em.addComponent<CTransform>(entity, Vec2f(x, y));
 
             // reproductive component
-            auto& repro = em.addComponent<CReproductive>(entity);
+            auto &repro = em.addComponent<CReproductive>(entity);
             repro.sex = (i < males ? Sex::Male : Sex::Female);
             repro.canReproduce = true;
 
@@ -175,53 +186,36 @@ void Scene_Simulation::spawnFromJson(const nlohmann::json& simJson) {
     em.update();
 }
 
-void Scene_Simulation::sDoAction(const Action& action) {
-    if (action.type() != ActionType::START) return;
+void Scene_Simulation::sDoAction(const Action &action)
+{
+    if (action.type() != ActionType::START)
+        return;
 
     if (action.name() == ActionName::QUIT_AND_SAVE)
     {
         onEnd();
     }
-
 }
 
-void Scene_Simulation::update() {
-    auto& em = m_simulation->entityManager();
-    auto& cm = m_simulation->componentManager();
-
-    em.update();
-
+void Scene_Simulation::update()
+{
     float dt = m_clock.restart().asSeconds();
-    if (dt <= 0.0f) dt = 1.0f / 60.0f;
 
-    // --- rebuild spatial hash every tick (fast) ---
-    m_spatialHash.clear();
-    for (const auto& ent : em.getEntities()) {
-        if (!ent || !ent->isActive()) continue;
-        if (!cm.has<CTransform>(ent->id())) continue;
-        const auto& t = cm.get<CTransform>(ent->id());
-        m_spatialHash.insert(ent, t.pos.x, t.pos.y);
+    if (dt <= 0.0f)
+    {
+        dt = 1.0f / 60.0f;
     }
 
-    // Implement pause functionality
-    if (!m_paused) {
-        //sDrag(); // MAYDELETE
-       // call AI first, then Movement
-        if (auto ais = m_simulation->systemManager().GetSystem<AISystem>()) {
-            ais->update(em, cm, dt);
-        }
-        if (auto ms = m_simulation->systemManager().GetSystem<MovementSystem>()) {
-            ms->update(em, cm, dt);
-        }
-        //sStatus();
-        //sCollision();
-        //sAnimation();
-        //sCamera();
+    // update when not paused
+    if (!m_paused)
+    {
+        m_world.update(dt);
         m_currentFrame++;
     }
 }
 
-void Scene_Simulation::onEnd() {
+void Scene_Simulation::onEnd()
+{
     // When the scene ends, change back to the MENU scene
 
     // Important: pass m_simulation (the SimulationEngine context) to Scene_Menu,
@@ -232,26 +226,29 @@ void Scene_Simulation::onEnd() {
         .changeScene(SceneID::Menu, std::make_shared<Scene_Menu>(m_simulation));
 }
 
+void Scene_Simulation::sRender()
+{
+    auto &em = m_world.entityManager();
+    auto &cm = m_world.componentManager();
 
-void Scene_Simulation::sRender() {
-    auto& em = m_simulation->entityManager();
-    auto& cm = m_simulation->componentManager();
-
-    sf::RenderWindow& win = m_simulation->window();
+    sf::RenderWindow &win = m_simulation->window();
     win.clear(sf::Color(15, 15, 20));
 
-    for (const auto& entity : em.getEntities()) {
-        if (!entity->isActive()) continue;
+    for (const auto &entity : em.getEntities())
+    {
+        if (!entity->isActive())
+            continue;
         const auto id = entity->id();
-        if (!cm.has<CTransform>(id)) continue;
-        const auto& transform = cm.get<CTransform>(id);
+        if (!cm.has<CTransform>(id))
+            continue;
+        const auto &transform = cm.get<CTransform>(id);
 
         sf::CircleShape circle(10.0f);
-        circle.setOrigin({ circle.getRadius(), circle.getRadius() });
-        circle.setPosition({ transform.pos.x, transform.pos.y });
+        circle.setOrigin({circle.getRadius(), circle.getRadius()});
+        circle.setPosition({transform.pos.x, transform.pos.y});
 
         // lookup species color
-        const auto& species = cm.get<CSpecies>(id);
+        const auto &species = cm.get<CSpecies>(id);
         auto it = m_speciesColors.find(species.speciesName);
         circle.setFillColor(it != m_speciesColors.end() ? it->second : sf::Color::White);
 
@@ -259,7 +256,8 @@ void Scene_Simulation::sRender() {
     }
 }
 
-void Scene_Simulation::onGui() {
+void Scene_Simulation::onGui()
+{
     // Example overlay window showing simulation info
     ImGui::Begin("Simulation Info", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -283,11 +281,11 @@ void Scene_Simulation::onGui() {
     ImGui::End();
 }
 
-
 // helpers
 
 // simple mapping from a simulation key/name to a file path.
 // Right now we just look in a "saves/" folder; you can change this.
-std::string Scene_Simulation::buildSavePathFromKey(const std::string& key) {
+std::string Scene_Simulation::buildSavePathFromKey(const std::string &key)
+{
     return "saves/" + key + ".json";
 }

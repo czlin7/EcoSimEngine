@@ -11,14 +11,8 @@
 #include "EcoSimEngine/ecs/Assets.hpp"
 #include "EcoSimEngine/SimulationEngine.hpp"
 #include "EcoSimEngine/scene/Scene_Menu.hpp"
-#include "EcoSimEngine/system/MovementSystem.hpp"
-#include "EcoSimEngine/system/AISystem.hpp"
-
 
 SimulationEngine::SimulationEngine(const std::string& path)
-    : m_systemManager()
-    , m_componentManager()
-    , m_entityManager(&m_systemManager, &m_componentManager)
 {
     // Subscribe to GUICommand events early
     m_eventBus.subscribe<Event::GUICommand>([this](const Event::GUICommand& cmd) {
@@ -74,25 +68,6 @@ void SimulationEngine::init(const std::string& path) {
     // imGui
     m_guiManager = std::make_unique<GUIManager>(this);
     m_guiManager->init(m_window);
-
-    // Movement system
-    auto movement = m_systemManager.RegisterSystem<MovementSystem>();
-    Signature moveSig;
-    moveSig.set(COMP_INDEX_CTransform);
-    moveSig.set(COMP_INDEX_CBehavior); // optional depending on your logic
-    m_systemManager.SetSignature<MovementSystem>(moveSig);
-
-    // AI system
-    auto ai = m_systemManager.RegisterSystem<AISystem>();
-    Signature aiSig;
-    aiSig.set(COMP_INDEX_CBehavior);
-    aiSig.set(COMP_INDEX_CTransform);
-    m_systemManager.SetSignature<AISystem>(aiSig);
-
-
-
-
-
 
     // --- Set initial scene ---
     m_sceneManager.changeScene(SceneID::Menu, std::make_shared<Scene_Menu>(this));
