@@ -9,15 +9,15 @@
 
 #include "EcoSimEngine/component/Components.hpp"
 #include "EcoSimEngine/scene/Scene.hpp"
-#include "EcoSimEngine/utils/SpatialHash.hpp"
+#include "EcoSimEngine/simulation/SimulationWorld.hpp"
 
 class Scene_Simulation : public Scene {
 private:
     std::string m_simKey;
+    SimulationWorld m_world;
     const std::string m_defaultSimulationPath{ "resources/defaults/default_simulation.json" };
 
     std::unordered_map<std::string, sf::Color> m_speciesColors;
-    SpatialHash m_spatialHash{ 120.0f };
     sf::Clock m_clock;
 
 protected:

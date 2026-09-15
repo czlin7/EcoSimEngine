@@ -39,6 +39,7 @@ if(ECOSIM_BUILD_APP)
         src/scene/Scene.cpp
         src/scene/Scene_Menu.cpp
         src/scene/Scene_Simulation.cpp
+        src/simulation/SimulationWorld.cpp
     )
 
     set(IMGUI_SOURCES

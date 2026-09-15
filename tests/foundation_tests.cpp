@@ -98,7 +98,7 @@ void testSystemManager() {
 void testEntityDestruction() {
     SystemManager systems;
     ComponentManager components;
-    EntityManager entities(&systems, &components);
+    EntityManager entities(systems, components);
 
     auto transformSystem = systems.RegisterSystem<TransformSystem>();
 
