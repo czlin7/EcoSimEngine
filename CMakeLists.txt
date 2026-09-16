@@ -39,6 +39,7 @@ if(ECOSIM_BUILD_APP)
         src/scene/Scene.cpp
         src/scene/Scene_Menu.cpp
         src/scene/Scene_Simulation.cpp
+        src/simulation/SimulationClock.cpp
         src/simulation/SimulationWorld.cpp
     )
 
@@ -96,6 +97,7 @@ if(BUILD_TESTING)
     add_executable(
         EcoSimEngineFoundationTests
         tests/foundation_tests.cpp
+        src/simulation/SimulationClock.cpp
     )
     target_compile_features(EcoSimEngineFoundationTests PRIVATE cxx_std_20)
     target_include_directories(EcoSimEngineFoundationTests PRIVATE include)

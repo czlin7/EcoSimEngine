@@ -4,6 +4,7 @@
 #include "EcoSimEngine/system/System.hpp"
 #include "EcoSimEngine/system/SystemManager.hpp"
 #include "EcoSimEngine/ecs/EntityManager.hpp"
+#include "EcoSimEngine/simulation/SimulationClock.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -179,6 +180,111 @@ void testEventBus() {
     require(total == 32, "unsubscribe must remove only the selected subscription");
 }
 
+void testSimulationClock()
+{
+    // A. Not enough elapsed time for one fixed step.
+    SimulationClock clock(0.1, 10);
+
+    clock.addElapsed(0.05);
+
+    require(
+        !clock.canStep(),
+        "clock must not step before enough time has accumulated");
+
+    require(
+        clock.tick() == 0,
+        "tick must remain zero before a step is consumed");
+
+
+    // B. Accumulated frame time should eventually produce one step.
+    clock.addElapsed(0.05);
+
+    require(
+        clock.canStep(),
+        "accumulated elapsed time must make one step available");
+
+    clock.consumeStep();
+
+    require(
+        clock.tick() == 1,
+        "consuming one step must increment the simulation tick");
+
+    require(
+        !clock.canStep(),
+        "consuming the available step must remove it from the accumulator");
+
+
+    // C. One frame may produce multiple fixed simulation steps.
+    clock.addElapsed(0.25);
+
+    int stepsConsumed = 0;
+
+    while (clock.canStep())
+    {
+        clock.consumeStep();
+        ++stepsConsumed;
+    }
+
+    require(
+        stepsConsumed == 2,
+        "0.25 seconds with a 0.1 second fixed step must produce two complete steps");
+
+    require(
+        clock.tick() == 3,
+        "simulation tick must count every consumed fixed step");
+
+
+    // D. Speed changes accumulation rate, not fixed-step size.
+    SimulationClock fastClock(0.1, 10);
+
+    fastClock.setSpeed(2.0);
+    fastClock.addElapsed(0.05);
+
+    require(
+        fastClock.canStep(),
+        "2x speed must turn 0.05 real seconds into 0.1 simulation seconds");
+
+    require(
+        fastClock.fixedStep() == 0.1,
+        "changing simulation speed must not change the fixed timestep");
+
+    fastClock.consumeStep();
+
+    require(
+        fastClock.tick() == 1,
+        "2x speed clock must consume the resulting simulation step normally");
+
+
+    // E. maxTicks is a hard upper bound.
+    SimulationClock limitedClock(0.1, 3);
+
+    limitedClock.addElapsed(1.0);
+
+    int limitedStepsConsumed = 0;
+
+    while (limitedClock.canStep())
+    {
+        limitedClock.consumeStep();
+        ++limitedStepsConsumed;
+    }
+
+    require(
+        limitedStepsConsumed == 3,
+        "clock must stop after maxTicks even when more accumulated time remains");
+
+    require(
+        limitedClock.tick() == 3,
+        "tick must stop exactly at maxTicks");
+
+    require(
+        limitedClock.finished(),
+        "clock must report finished after reaching maxTicks");
+
+    require(
+        !limitedClock.canStep(),
+        "finished clock must not expose another simulation step");
+}
+
 }  // namespace
 
 int main() {
@@ -187,6 +293,7 @@ int main() {
         testSystemManager();
         testEntityDestruction();
         testEventBus();
+        testSimulationClock();
     } catch (const std::exception& error) {
         std::cerr << "foundation test failure: " << error.what() << '\n';
         return 1;

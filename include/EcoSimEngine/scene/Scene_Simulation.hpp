@@ -9,15 +9,21 @@
 
 #include "EcoSimEngine/component/Components.hpp"
 #include "EcoSimEngine/scene/Scene.hpp"
+#include "EcoSimEngine/simulation/SimulationClock.hpp"
 #include "EcoSimEngine/simulation/SimulationWorld.hpp"
 
 class Scene_Simulation : public Scene {
 private:
     std::string m_simKey;
+
     SimulationWorld m_world;
+    SimulationClock m_simulationClock;
+
     const std::string m_defaultSimulationPath{ "resources/defaults/default_simulation.json" };
 
     std::unordered_map<std::string, sf::Color> m_speciesColors;
+    
+    // measure real time elapsed between frames for simulation update
     sf::Clock m_clock;
 
 protected:

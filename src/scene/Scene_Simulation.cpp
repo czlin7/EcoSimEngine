@@ -117,8 +117,21 @@ void Scene_Simulation::spawnFromJson(const nlohmann::json &simJson)
     auto &em = m_world.entityManager();
     auto &cm = m_world.componentManager();
 
-    // read population counts
-    auto populations = simJson["simulation"]["initialPopulation"];
+    const auto &simulationJson = simJson.at("simulation");
+    const auto &worldJson = simulationJson.at("world");
+
+    const double fixedStep =
+        worldJson.at("timeStep").get<double>();
+
+    const std::uint64_t maxTicks =
+        worldJson.at("maxTicks").get<std::uint64_t>();
+
+    m_simulationClock.configure(
+        fixedStep,
+        maxTicks);
+
+    const auto &populations =
+        simulationJson.at("initialPopulation");
 
     // --- set up RNG once per load ---
     std::random_device rd;
@@ -194,24 +207,50 @@ void Scene_Simulation::sDoAction(const Action &action)
     if (action.name() == ActionName::QUIT_AND_SAVE)
     {
         onEnd();
+        return;
+    }
+
+    if (action.name() == ActionName::PAUSE)
+    {
+        setPaused(!m_paused);
+        return;
     }
 }
 
 void Scene_Simulation::update()
 {
-    float dt = m_clock.restart().asSeconds();
+    const float realDeltaSeconds = m_clock.restart().asSeconds();
 
-    if (dt <= 0.0f)
+    // Always restart the real-time clock, including while paused.
+    // Otherwise time spent paused would be accumulated and processed
+    // as a large catch-up burst after unpausing.
+    if (m_paused)
     {
-        dt = 1.0f / 60.0f;
+        return;
     }
 
-    // update when not paused
-    if (!m_paused)
+    if (m_simulationClock.finished())
     {
-        m_world.update(dt);
-        m_currentFrame++;
+        return;
     }
+
+    m_simulationClock.addElapsed(
+        static_cast<double>(realDeltaSeconds));
+
+    while (m_simulationClock.canStep())
+    {
+        m_world.update(
+            static_cast<float>(m_simulationClock.fixedStep()));
+
+        m_simulationClock.consumeStep();
+    }
+
+    // Keep the legacy Scene frame counter aligned with simulation
+    // progression for now. SimulationClock::tick() is the authoritative
+    // simulation counter.
+    m_currentFrame =
+        static_cast<std::size_t>(
+            m_simulationClock.tick());
 }
 
 void Scene_Simulation::onEnd()
@@ -259,11 +298,43 @@ void Scene_Simulation::sRender()
 void Scene_Simulation::onGui()
 {
     // Example overlay window showing simulation info
-    ImGui::Begin("Simulation Info", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Begin(
+        "Simulation Info ",
+        nullptr,
+        ImGuiWindowFlags_AlwaysAutoResize);
 
-    // Frame/time info
-    ImGui::Text("Frame: %zu", m_currentFrame);
-    ImGui::Text("Delta time: %.3f s", m_clock.getElapsedTime().asSeconds());
+    ImGui::Text(
+        "Tick: %llu / %llu",
+        static_cast<unsigned long long>(m_simulationClock.tick()),
+        static_cast<unsigned long long>(m_simulationClock.maxTicks())
+    );
+
+    ImGui::Text(
+        "Fixed timestep: %.6f s",
+        m_simulationClock.fixedStep());
+
+    ImGui::Text(
+        "Paused: %s",
+        m_paused ? "yes" : "no");
+
+    if (m_simulationClock.finished())
+    {
+        ImGui::Text("Simulation finished.");
+    }
+
+    float simulationSped = static_cast<float>(m_simulationClock.speed());
+
+    if (ImGui::SliderFloat(
+        "Simulation Speed",
+        &simulationSped,
+        0.25f,
+        4.0f,
+        "%.2fx"))
+    {
+        m_simulationClock.setSpeed(static_cast<double>(simulationSped));
+    }
+
+    ImGui::Separator();
 
     // Mouse info
     ImGui::Text("Mouse Position: (%.1f, %.1f)", m_mousePos.x, m_mousePos.y);

@@ -17,7 +17,7 @@
                 "width": 1000,
                 "height": 1000
             },
-            "timeStep": 1.0,
+            "timeStep": 0.0166666667,
             "maxTicks": 100000
         }
     }
