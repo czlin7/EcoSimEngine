@@ -1,8 +1,8 @@
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <random>
 
 #include "SFML/Graphics/CircleShape.hpp"
 #include "SFML/Graphics/RectangleShape.hpp"
@@ -18,7 +18,9 @@
 #include "EcoSimEngine/scene/Scene_Menu.hpp"
 #include "EcoSimEngine/scene/Scene_Simulation.hpp"
 #include "EcoSimEngine/math/Vec2.hpp"
-#include "EcoSimEngine/utils/Utils.hpp"
+
+#include "EcoSimEngine/utils/ColorUtils.hpp"
+#include "EcoSimEngine/utils/Random.hpp"
 
 Scene_Simulation::Scene_Simulation(SimulationEngine *engine, const std::string &simKey)
     : Scene(engine), m_simKey(simKey)
@@ -115,57 +117,72 @@ void Scene_Simulation::loadDefaultSimulation(const std::string &defaultSimulatio
 void Scene_Simulation::spawnFromJson(const nlohmann::json &simJson)
 {
     auto &em = m_world.entityManager();
-    auto &cm = m_world.componentManager();
 
     const auto &simulationJson = simJson.at("simulation");
     const auto &worldJson = simulationJson.at("world");
 
+    // --- configure deterministic RNG ---
+    const std::uint32_t seed =
+        simulationJson.at("seed").get<std::uint32_t>();
+
+    m_world.reseed(seed);
+
+    // --- configure simulation clock ---
     const double fixedStep =
         worldJson.at("timeStep").get<double>();
 
     const std::uint64_t maxTicks =
         worldJson.at("maxTicks").get<std::uint64_t>();
 
-    m_simulationClock.configure(
-        fixedStep,
-        maxTicks);
+    m_simulationClock.configure(fixedStep, maxTicks);
+
+    // --- load world dimensions ---
+    const float worldWidth =
+        worldJson.at("size").at("width").get<float>();
+
+    const float worldHeight =
+        worldJson.at("size").at("height").get<float>();
 
     const auto &populations =
         simulationJson.at("initialPopulation");
 
-    // --- set up RNG once per load ---
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> distX(
-        0, simJson["simulation"]["world"]["size"]["width"].get<int>());
-    std::uniform_real_distribution<float> distY(
-        0, simJson["simulation"]["world"]["size"]["height"].get<int>());
-
-    int speciesCount = static_cast<int>(populations.size());
+    const int speciesCount =
+        static_cast<int>(populations.size());
 
     // Precompute species colours (single pass)
     int idx = 0;
-    for (auto &[speciesName, popData] : populations.items())
+
+    for (const auto &[speciesName, popData] : populations.items())
     {
-        float hue = (idx * 360.0f) / std::max(1, speciesCount);   // evenly spaced hues
-        m_speciesColors[speciesName] = hslToRgb(hue, 0.7f, 0.5f); // 70% sat, 50% lightness
+        const float hue =
+            (idx * 360.0f) / std::max(1, speciesCount); // evenly spaced hues
+
+        m_speciesColors[speciesName] =
+            hslToRgb(hue, 0.7f, 0.5f); // 70% sat, 50% lightness
+
         ++idx;
     }
 
-    for (auto &[speciesName, popData] : populations.items())
+    for (const auto &[speciesName, popData] : populations.items())
     {
-        int total = popData["total"];
-        int males = popData["male"];
-        int females = popData["female"];
+        const int total = popData.at("total").get<int>();
+        const int males = popData.at("male").get<int>();
+        const int females = popData.at("female").get<int>();
 
         // load species data JSON (per-species data)
-        std::string speciesFile = "resources/definitions/species/" + speciesName + ".json";
+        std::string speciesFile =
+            "resources/definitions/species/" + speciesName + ".json";
+
         std::ifstream sf(speciesFile);
+
         if (!sf.is_open())
         {
-            std::cerr << "Could not open species file: " << speciesFile << "\n";
+            std::cerr << "Could not open species file: "
+                      << speciesFile << '\n';
+
             continue;
         }
+
         nlohmann::json speciesJson;
         sf >> speciesJson;
 
@@ -180,19 +197,36 @@ void Scene_Simulation::spawnFromJson(const nlohmann::json &simJson)
             em.addComponent<CEnergy>(entity, 100.0f);
 
             // proper random position
-            float x = distX(gen);
-            float y = distY(gen);
-            em.addComponent<CTransform>(entity, Vec2f(x, y));
+            const float x =
+                randomFloat(
+                    m_world.rng(),
+                    0.0f,
+                    worldWidth);
+
+            const float y =
+                randomFloat(
+                    m_world.rng(),
+                    0.0f,
+                    worldHeight);
+
+            em.addComponent<CTransform>(entity, Vec2f{x, y});
 
             // reproductive component
-            auto &repro = em.addComponent<CReproductive>(entity);
-            repro.sex = (i < males ? Sex::Male : Sex::Female);
-            repro.canReproduce = true;
+            auto &reproductive =
+                em.addComponent<CReproductive>(entity);
 
-            // TODO
+            reproductive.sex =
+                (i < males ? Sex::Male : Sex::Female);
+
+            reproductive.canReproduce = true;
+
             em.addComponent<CBehavior>(entity);
         }
-        std::cout << "Loaded " << total << " " << speciesName << " entities.\n";
+
+        std::cout << "Loaded "
+                  << total << " "
+                  << speciesName
+                  << " entities.\n";
     }
 
     // Now flush pending entities -> this also calls EntitySignatureChanged for newly added entities
@@ -306,8 +340,7 @@ void Scene_Simulation::onGui()
     ImGui::Text(
         "Tick: %llu / %llu",
         static_cast<unsigned long long>(m_simulationClock.tick()),
-        static_cast<unsigned long long>(m_simulationClock.maxTicks())
-    );
+        static_cast<unsigned long long>(m_simulationClock.maxTicks()));
 
     ImGui::Text(
         "Fixed timestep: %.6f s",
@@ -325,11 +358,11 @@ void Scene_Simulation::onGui()
     float simulationSped = static_cast<float>(m_simulationClock.speed());
 
     if (ImGui::SliderFloat(
-        "Simulation Speed",
-        &simulationSped,
-        0.25f,
-        4.0f,
-        "%.2fx"))
+            "Simulation Speed",
+            &simulationSped,
+            0.25f,
+            4.0f,
+            "%.2fx"))
     {
         m_simulationClock.setSpeed(static_cast<double>(simulationSped));
     }

@@ -1,5 +1,6 @@
 {
     "simulation": {
+        "seed": 48596,
         "initialPopulation": {
             "fox": {
                 "total": 10,

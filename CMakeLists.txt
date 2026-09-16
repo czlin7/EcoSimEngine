@@ -98,6 +98,7 @@ if(BUILD_TESTING)
         EcoSimEngineFoundationTests
         tests/foundation_tests.cpp
         src/simulation/SimulationClock.cpp
+        src/simulation/SimulationWorld.cpp
     )
     target_compile_features(EcoSimEngineFoundationTests PRIVATE cxx_std_20)
     target_include_directories(EcoSimEngineFoundationTests PRIVATE include)
