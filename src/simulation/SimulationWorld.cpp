@@ -31,7 +31,7 @@ void SimulationWorld::update(float dt)
 
     if (auto ai = m_systemManager.GetSystem<AISystem>())
     {
-        ai->update(m_entityManager, m_componentManager, dt);
+        ai->update(m_entityManager, m_componentManager, dt, m_rng);
     }
 
     if (auto movement = m_systemManager.GetSystem<MovementSystem>())
@@ -41,6 +41,16 @@ void SimulationWorld::update(float dt)
             m_componentManager,
             dt);
     }
+}
+
+void SimulationWorld::reseed(std::uint32_t seed)
+{
+    m_rng.seed(seed);
+}
+
+std::mt19937& SimulationWorld::rng() noexcept
+{
+    return m_rng;
 }
 
 // getters for the managers
