@@ -46,57 +46,57 @@ namespace
 
     // helper
     SimulationSnapshot runDeterministicSimulation(
-    std::uint32_t seed)
-{
-    SimulationWorld world;
-
-    world.reseed(seed);
-
-    auto& entities =
-        world.entityManager();
-
-    auto& components =
-        world.componentManager();
-
-    auto entity =
-        entities.addEntity("test");
-
-    entities.addComponent<CTransform>(
-        entity,
-        Vec2f{0.0f, 0.0f});
-
-    entities.addComponent<CBehavior>(
-        entity);
-
-    entities.update();
-
-    constexpr float fixedStep =
-        1.0f / 60.0f;
-
-    constexpr int ticks = 300;
-
-    for (int i = 0; i < ticks; ++i)
+        std::uint32_t seed)
     {
-        world.update(fixedStep);
+        SimulationWorld world;
+
+        world.reseed(seed);
+
+        auto &entities =
+            world.entityManager();
+
+        auto &components =
+            world.componentManager();
+
+        auto entity =
+            entities.addEntity("test");
+
+        entities.addComponent<CTransform>(
+            entity,
+            Vec2f{0.0f, 0.0f});
+
+        entities.addComponent<CBehavior>(
+            entity);
+
+        entities.update();
+
+        constexpr float fixedStep =
+            1.0f / 60.0f;
+
+        constexpr int ticks = 300;
+
+        for (int i = 0; i < ticks; ++i)
+        {
+            world.update(fixedStep);
+        }
+
+        const auto id =
+            entity->id();
+
+        const auto &transform =
+            components.get<CTransform>(id);
+
+        const auto &behavior =
+            components.get<CBehavior>(id);
+
+        return SimulationSnapshot{
+            transform.pos.x,
+            transform.pos.y,
+            transform.velocity.x,
+            transform.velocity.y,
+            behavior.current,
+            behavior.stateTimer};
     }
-
-    const auto id =
-        entity->id();
-
-    const auto& transform =
-        components.get<CTransform>(id);
-
-    const auto& behavior =
-        components.get<CBehavior>(id);
-
-    return SimulationSnapshot{
-        transform.pos.x,
-        transform.pos.y,
-        transform.velocity.x,
-        transform.velocity.y,
-        behavior.current,
-        behavior.stateTimer};
-}
 
     void testComponentManager()
     {
@@ -368,34 +368,119 @@ namespace
             "finished clock must not expose another simulation step");
     }
 
+    void testMetabolismSystem()
+    {
+        SimulationWorld world;
+
+        auto &entities = world.entityManager();
+        auto &components = world.componentManager();
+
+        auto entity = entities.addEntity("test-animal");
+
+        auto &energy =
+            entities.addComponent<CEnergy>(
+                entity,
+                1.0f);
+
+        energy.consumptionRate = 1.0f;
+
+        entities.addComponent<CHealth>(
+            entity,
+            5.0f);
+
+        entities.update();
+
+        const auto id = entity->id();
+
+        // 0.5 seconds:
+        // energy 1.0 -> 0.5, health unchanged.
+        world.update(0.5f);
+
+        require(
+            components.get<CEnergy>(id).current == 0.5f,
+            "metabolism must consume energy according to dt");
+
+        require(
+            components.get<CHealth>(id).health == 5.0f,
+            "health must remain unchanged while energy is available");
+
+        // Another 0.5 seconds:
+        // energy reaches zero, but starvation starts on the next tick.
+        world.update(0.5f);
+
+        require(
+            components.get<CEnergy>(id).current == 0.0f,
+            "energy must clamp at zero");
+
+        require(
+            components.get<CHealth>(id).health == 5.0f,
+            "health must not fall on the tick that energy reaches zero");
+
+        // 0.25 seconds starving at 10 health/second:
+        // health 5.0 -> 2.5.
+        world.update(0.25f);
+
+        require(
+            components.get<CHealth>(id).health == 2.5f,
+            "starvation must reduce health according to dt");
+
+        require(
+            entity->isActive(),
+            "entity must remain alive while health is above zero");
+
+        // Another 0.25 seconds:
+        // health 2.5 -> 0.0, entity dies.
+        world.update(0.25f);
+
+        require(
+            !entity->isActive(),
+            "entity must be destroyed when starvation reduces health to zero");
+
+        require(
+            !components.has<CEnergy>(id),
+            "destroyed entity must have its energy component removed");
+
+        require(
+            !components.has<CHealth>(id),
+            "destroyed entity must have its health component removed");
+
+        // EntityManager removes inactive entities from its containers
+        // at the beginning of the following world update.
+        world.update(0.0f);
+
+        require(
+            entities.getEntityById(id) == nullptr,
+            "destroyed entity must be removed from EntityManager on the next update");
+    }
+
     void testDeterministicSimulation()
-{
-    constexpr std::uint32_t seed = 48596;
+    {
+        constexpr std::uint32_t seed = 48596;
 
-    const SimulationSnapshot first =
-        runDeterministicSimulation(seed);
+        const SimulationSnapshot first =
+            runDeterministicSimulation(seed);
 
-    const SimulationSnapshot second =
-        runDeterministicSimulation(seed);
+        const SimulationSnapshot second =
+            runDeterministicSimulation(seed);
 
-    require(
-        first.positionX == second.positionX &&
-        first.positionY == second.positionY,
-        "same seed and tick sequence must reproduce entity position");
+        require(
+            first.positionX == second.positionX &&
+                first.positionY == second.positionY,
+            "same seed and tick sequence must reproduce entity position");
 
-    require(
-        first.velocityX == second.velocityX &&
-        first.velocityY == second.velocityY,
-        "same seed and tick sequence must reproduce entity velocity");
+        require(
+            first.velocityX == second.velocityX &&
+                first.velocityY == second.velocityY,
+            "same seed and tick sequence must reproduce entity velocity");
 
-    require(
-        first.behaviorState == second.behaviorState,
-        "same seed and tick sequence must reproduce behavior state");
+        require(
+            first.behaviorState == second.behaviorState,
+            "same seed and tick sequence must reproduce behavior state");
 
-    require(
-        first.stateTimer == second.stateTimer,
-        "same seed and tick sequence must reproduce behavior timing");
-}
+        require(
+            first.stateTimer == second.stateTimer,
+            "same seed and tick sequence must reproduce behavior timing");
+    }
 
 } // namespace
 
@@ -408,6 +493,7 @@ int main()
         testEntityDestruction();
         testEventBus();
         testSimulationClock();
+        testMetabolismSystem();
         testDeterministicSimulation();
     }
     catch (const std::exception &error)
