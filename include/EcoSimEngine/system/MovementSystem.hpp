@@ -8,6 +8,12 @@
 
 class MovementSystem : public System {
 public:
+    static Signature requiredSignature() {
+        Signature signature;
+        signature.set(COMP_INDEX_CTransform);
+        return signature;
+    }
+
     // EntityManager must implement getEntityById(size_t)
     void update(EntityManager& em, ComponentManager& cm, float dt)
     {

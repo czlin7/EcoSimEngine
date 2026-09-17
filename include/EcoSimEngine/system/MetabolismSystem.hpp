@@ -5,10 +5,18 @@
 
 #include "EcoSimEngine/ecs/EntityManager.hpp"
 #include "EcoSimEngine/system/System.hpp"
+#include "EcoSimEngine/component/ComponentIndices.hpp"
 
 class MetabolismSystem : public System
 {
 public:
+    static Signature requiredSignature() {
+        Signature signature;
+        signature.set(COMP_INDEX_CEnergy);
+        signature.set(COMP_INDEX_CHealth);
+        return signature;
+    }
+
     static constexpr float kStarvationDamagePerSecond{10.0f}; // Damage applied to entities that are starving
 
     void update(
