@@ -27,18 +27,11 @@ public:
         }
 
         auto system = std::make_shared<T>(std::forward<Args>(args)...);
+
         m_systems.emplace(type, system);
+        m_signatures.emplace(type, T::requiredSignature());
+
         return system;
-    }
-
-    template <typename T>
-    void SetSignature(const Signature& signature) {
-        const std::type_index type(typeid(T));
-        if (!m_systems.contains(type)) {
-            throw std::logic_error("Cannot set a signature for an unregistered system");
-        }
-
-        m_signatures[type] = signature;
     }
 
     void EntityDestroyed(EntityId id) {

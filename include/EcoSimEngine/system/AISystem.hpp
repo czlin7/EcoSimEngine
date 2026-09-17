@@ -7,10 +7,18 @@
 #include "EcoSimEngine/math/Vec2.hpp"
 #include "EcoSimEngine/system/System.hpp"
 #include "EcoSimEngine/utils/Random.hpp"
+#include "EcoSimEngine/component/ComponentIndices.hpp"
 
 class AISystem : public System
 {
 public:
+    static Signature requiredSignature() {
+        Signature signature;
+        signature.set(COMP_INDEX_CBehavior);
+        signature.set(COMP_INDEX_CTransform);
+        return signature;
+    }
+
     void update(
         EntityManager &em,
         ComponentManager &cm, 

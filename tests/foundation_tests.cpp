@@ -31,9 +31,13 @@ namespace
 
     class TransformSystem final : public System
     {
-    };
-    class UnregisteredSystem final : public System
-    {
+    public:
+        static Signature requiredSignature()
+        {
+            Signature signature;
+            signature.set(COMP_INDEX_CTransform);
+            return signature;
+        }
     };
 
     void require(bool condition, const char *message)
@@ -140,21 +144,17 @@ namespace
         SystemManager systems;
         auto transformSystem = systems.RegisterSystem<TransformSystem>();
 
-        Signature required;
-        required.set(0);
-        systems.SetSignature<TransformSystem>(required);
-
         Signature entitySignature;
         systems.EntitySignatureChanged(11, entitySignature);
         require(!transformSystem->mEntities.contains(11),
                 "entity without required components must not join system");
 
-        entitySignature.set(0);
+        entitySignature.set(COMP_INDEX_CTransform);
         systems.EntitySignatureChanged(11, entitySignature);
         require(transformSystem->mEntities.contains(11),
                 "matching entity must join system");
 
-        entitySignature.reset(0);
+        entitySignature.reset(COMP_INDEX_CTransform);
         systems.EntitySignatureChanged(11, entitySignature);
         require(!transformSystem->mEntities.contains(11),
                 "entity must leave system after signature stops matching");
@@ -170,17 +170,6 @@ namespace
         }
         require(duplicateRejected, "duplicate system registration must fail in release builds too");
 
-        bool unregisteredSignatureRejected = false;
-        try
-        {
-            systems.SetSignature<UnregisteredSystem>(required);
-        }
-        catch (const std::logic_error &)
-        {
-            unregisteredSignatureRejected = true;
-        }
-        require(unregisteredSignatureRejected,
-                "setting a signature for an unregistered system must fail explicitly");
     }
 
     void testEntityDestruction()
@@ -190,10 +179,6 @@ namespace
         EntityManager entities(systems, components);
 
         auto transformSystem = systems.RegisterSystem<TransformSystem>();
-
-        Signature required;
-        required.set(COMP_INDEX_CTransform);
-        systems.SetSignature<TransformSystem>(required);
 
         auto destroyedEntity = entities.addEntity("destroyed");
         auto survivingEntity = entities.addEntity("survivor");
