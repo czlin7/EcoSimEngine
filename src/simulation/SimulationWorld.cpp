@@ -1,12 +1,14 @@
 #include "EcoSimEngine/simulation/SimulationWorld.hpp"
 
 #include "EcoSimEngine/component/ComponentIndices.hpp"
+
 #include "EcoSimEngine/system/AISystem.hpp"
 #include "EcoSimEngine/system/MovementSystem.hpp"
+#include "EcoSimEngine/system/MetabolismSystem.hpp"
 
 SimulationWorld::SimulationWorld()
     : m_entityManager(m_systemManager, m_componentManager)
-{
+{    
     // Movement system
     m_systemManager.RegisterSystem<MovementSystem>();
 
@@ -23,11 +25,28 @@ SimulationWorld::SimulationWorld()
     aiSignature.set(COMP_INDEX_CTransform);
 
     m_systemManager.SetSignature<AISystem>(aiSignature);
+
+    // Metabolism system
+    m_systemManager.RegisterSystem<MetabolismSystem>();
+
+    Signature metabolismSignature;
+    metabolismSignature.set(COMP_INDEX_CEnergy);
+    metabolismSignature.set(COMP_INDEX_CHealth);
+
+    m_systemManager.SetSignature<MetabolismSystem>(metabolismSignature);
 }
 
 void SimulationWorld::update(float dt)
 {
     m_entityManager.update();
+
+    if (auto metabolism = m_systemManager.GetSystem<MetabolismSystem>())
+    {
+        metabolism->update(
+            m_entityManager,
+            m_componentManager,
+            dt);
+    }
 
     if (auto ai = m_systemManager.GetSystem<AISystem>())
     {
